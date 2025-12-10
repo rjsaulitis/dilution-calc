@@ -9,7 +9,8 @@ import {
   useTheme,
   IconButton,
 } from "@mui/material";
-import { X } from "phosphor-react";
+import { TestTube, Wine, X } from "phosphor-react";
+import { BottleWine, SquareX, TestTubeDiagonal, WineIcon } from "lucide-react";
 
 const presetsRaw = [50, 20, 10, 1];
 const presetsDilute = [
@@ -90,27 +91,28 @@ export default function App() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        maxHeight: "100vh",
+        minHeight: "100dvh",
+        maxHeight: "100dvh",
         overflow: "hidden",
         bgcolor: "#f5f5f5",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        p: 2,
+        p: 0,
       }}
     >
       <Paper
         sx={{
           p: 4,
-          borderRadius: 3,
           maxWidth: 600,
+          height: isMobile ? "100vh" : "auto",
+          borderRadius: isMobile ? 0 : 3,
+          boxShadow: isMobile ? "none" : "0 4px 20px rgba(0,0,0,0.05)",
           width: "100%",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
         }}
       >
-        <Stack spacing={3}>
+        <Stack spacing={3} sx={{ px: isMobile ? 2 : 0 }}>
           {/* Helper text */}
           {helperVisible && (
             <Box
@@ -122,33 +124,30 @@ export default function App() {
                 border: "1px solid #36c8b5ff",
                 textAlign: "center",
               }}
+              onClick={() => setHelperVisible(false)}
             >
               <Typography variant="body2" sx={{ color: "#333" }}>
-                Target % is always relative to pure raw material (100%). Enter
-                your bottle’s current concentration to calculate the grams
-                needed for the chosen target %.
+                New strength % is always relative to pure raw material (100%).
+                Click this message to close it.
               </Typography>
-              <IconButton
+              {/* <IconButton
                 size="small"
-                onClick={() => setHelperVisible(false)}
+                
                 sx={{ position: "absolute", top: 4, right: 4 }}
               >
-                <X size={20} weight="bold" />
-              </IconButton>
+                <SquareX size={20} weight="bold" color="#176c55ff" />
+              </IconButton> */}
             </Box>
           )}
 
           {/* Inputs */}
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <TextField
-              label="Current Concentration %"
-              value={mode === "raw" ? material : existing}
-              onChange={(e) =>
-                mode === "raw"
-                  ? setMaterial(e.target.value)
-                  : setExisting(e.target.value)
-              }
-              type="number"
+              label="Current Strength (%)"
+              value={existing}
+              onChange={(e) => setExisting(e.target.value)}
+              type="number" // still needed for validation & stepper
+              pattern="[0-9]*"
               fullWidth
               sx={{
                 "& .MuiOutlinedInput-root.Mui-focused": {
@@ -158,13 +157,18 @@ export default function App() {
               }}
             />
             <TextField
-              label="Target %"
+              label="New Strength (%)"
               value={target}
               onChange={(e) => setTarget(e.target.value)}
-              type="number"
+              type="number" // still needed for validation & stepper
+              pattern="[0-9]*"
               fullWidth
-              error={target > material}
-              helperText={target > material ? "Target exceeds current %" : ""}
+              error={Number(target) > Number(existing)}
+              helperText={
+                Number(target) > Number(existing)
+                  ? "Must be less than Current %"
+                  : ""
+              }
               sx={{
                 "& .MuiOutlinedInput-root.Mui-focused": {
                   "& fieldset": { borderColor: "#333" },
@@ -174,10 +178,12 @@ export default function App() {
             />
 
             <TextField
-              label="Final volume (ml)"
+              label="Total Amount (ml)"
               value={volume}
               onChange={(e) => setVolume(e.target.value)}
-              type="number"
+              type="number" // still needed for validation & stepper
+              inputMode="decimal" // tells mobile to show numeric keyboard
+              pattern="[0-9]*"
               fullWidth
               sx={{
                 "& .MuiOutlinedInput-root.Mui-focused": {
@@ -199,12 +205,20 @@ export default function App() {
                 textAlign: "center",
               }}
             >
-              <Typography variant="subtitle1" gutterBottom>
-                {mode === "raw"
-                  ? "Raw Material Needed"
-                  : "Existing Dilution Needed"}
+              <Stack
+                direction={"row"}
+                justifyContent={"Center"}
+                alignItems={"center"}
+                sx={{ pb: 1 }}
+              >
+                <Typography variant="subtitle1" sx={{ pr: 1 }}>
+                  Material Needed
+                </Typography>
+                <TestTubeDiagonal size={20} />
+              </Stack>
+              <Typography sx={{ fontWeight: "normal" }} variant="h4">
+                {materialNeeded} g
               </Typography>
-              <Typography variant="h4">{materialNeeded} g</Typography>
             </Box>
             <Box
               sx={{
@@ -215,10 +229,20 @@ export default function App() {
                 textAlign: "center",
               }}
             >
-              <Typography variant="subtitle1" gutterBottom>
-                Solvent Needed
+              <Stack
+                direction={"row"}
+                justifyContent={"Center"}
+                alignItems={"center"}
+                sx={{ pb: 1 }}
+              >
+                <Typography variant="subtitle1" sx={{ pr: 0.6 }}>
+                  Solvent Needed
+                </Typography>
+                <BottleWine size={20} />
+              </Stack>
+              <Typography sx={{ fontWeight: "normal" }} variant="h4">
+                {solventNeeded} g
               </Typography>
-              <Typography variant="h4">{solventNeeded} g</Typography>
             </Box>
           </Stack>
 
@@ -287,15 +311,17 @@ export default function App() {
       </Paper>
 
       {/* Attribution */}
-      <Typography
-        variant="caption"
-        sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: "#555" }}
-        onClick={() =>
-          window.open("https://www.youtube.com/@perfumerinajar", "_blank")
-        }
-      >
-        Brought to you by @perfumerinajar
-      </Typography>
+      {!isMobile && (
+        <Typography
+          variant="caption"
+          sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: "#555" }}
+          onClick={() =>
+            window.open("https://www.youtube.com/@perfumerinajar", "_blank")
+          }
+        >
+          Brought to you by @perfumerinajar
+        </Typography>
+      )}
     </Box>
   );
 }
